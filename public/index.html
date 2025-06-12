@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizador de Rutas TransMilenio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #c10000;
+        }
+        button {
+            background-color: #c10000;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #a00000;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 4px solid #c10000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Optimizador de Rutas TransMilenio</h1>
+    <div class="form-container">
+        <form id="routeForm">
+            <div class="form-group">
+                <label for="start">Estación de Partida:</label>
+                <select id="start" name="startStation" required>
+                    <option value="">Seleccione una estación</option>
+                    <option value="Portal Norte">Portal Norte</option>
+                    <option value="Calle 100">Calle 100</option>
+                    <option value="Calle 72">Calle 72</option>
+                    <option value="Portal 80">Portal 80</option>
+                    <option value="Minuto">Minuto</option>
+                    <option value="Portal Sur">Portal Sur</option>
+                    <option value="Madelena">Madelena</option>
+                    <option value="Comuneros">Comuneros</option>
+                    <option value="Centro">Centro</option>
+                    <option value="Portal Suba">Portal Suba</option>
+                    <option value="Humedal Córdoba">Humedal Córdoba</option>
+                    <option value="Pepe Sierra">Pepe Sierra</option>
+                    <option value="Virrey">Virrey</option>
+                    <option value="Portal Américas">Portal Américas</option>
+                    <option value="Banderas">Banderas</option>
+                    <option value="Ricaurte">Ricaurte</option>
+                    <option value="San Façon">San Façon</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="end">Estación de Destino:</label>
+                <select id="end" name="endStation" required>
+                    <option value="">Seleccione una estación</option>
+                    <option value="Portal Norte">Portal Norte</option>
+                    <option value="Calle 100">Calle 100</option>
+                    <option value="Calle 72">Calle 72</option>
+                    <option value="Portal 80">Portal 80</option>
+                    <option value="Minuto">Minuto</option>
+                    <option value="Portal Sur">Portal Sur</option>
+                    <option value="Madelena">Madelena</option>
+                    <option value="Comuneros">Comuneros</option>
+                    <option value="Centro">Centro</option>
+                    <option value="Portal Suba">Portal Suba</option>
+                    <option value="Humedal Córdoba">Humedal Córdoba</option>
+                    <option value="Pepe Sierra">Pepe Sierra</option>
+                    <option value="Virrey">Virrey</option>
+                    <option value="Portal Américas">Portal Américas</option>
+                    <option value="Banderas">Banderas</option>
+                    <option value="Ricaurte">Ricaurte</option>
+                    <option value="San Façon">San Façon</option>
+                </select>
+            </div>
+            <button type="submit">Buscar Mejor Ruta</button>
+        </form>
+    </div>
+    <div id="progress" class="progress-container"></div>
+    <div id="result" class="result-container"></div>
+
+    <script>
+        document.getElementById('routeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Buscando la mejor ruta...';
+
+            try {
+                const response = await fetch('/api/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        startStation: document.getElementById('start').value,
+                        endStation: document.getElementById('end').value
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.data) {
+                    const route = data.data;
+                    if (route.type === 'direct') {
+                        resultDiv.innerHTML = `
+                            <h3>Ruta Directa Encontrada:</h3>
+                            <p><strong>Nombre de la ruta:</strong> ${route.routeName}</p>
+                            <p><strong>Distancia:</strong> ${route.distance} km</p>
+                            <p><strong>Duración estimada:</strong> ${route.estimatedDuration}</p>
+                            <p><strong>Frecuencia:</strong> ${route.frequency}</p>
+                            <h4>Paradas:</h4>
+                            <ul>
+                                ${route.stops.map(stop => `
+                                    <li>${stop.name} (${stop.estimatedTime})</li>
+                                `).join('')}
+                            </ul>
+                        `;
+                    } else if (route.type === 'transfer') {
+                        resultDiv.innerHTML = `
+                            <h3>Ruta con Transbordo Encontrada:</h3>
+                            <div class="route-leg">
+                                <h4>Primera Parte:</h4>
+                                <p><strong>Ruta:</strong> ${route.firstLeg.routeName}</p>
+                                <p><strong>Paradas:</strong></p>
+                                <ul>
+                                    ${route.firstLeg.stops.map(stop => `
+                                        <li>${stop.name} (${stop.estimatedTime})</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            <div class="transfer-info">
+                                <p><strong>Transbordo en:</strong> ${route.transferStation}</p>
+                            </div>
+                            <div class="route-leg">
+                                <h4>Segunda Parte:</h4>
+                                <p><strong>Ruta:</strong> ${route.secondLeg.routeName}</p>
+                                <p><strong>Paradas:</strong></p>
+                                <ul>
+                                    ${route.secondLeg.stops.map(stop => `
+                                        <li>${stop.name} (${stop.estimatedTime})</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            <div class="route-summary">
+                                <p><strong>Distancia total:</strong> ${route.totalDistance} km</p>
+                                <p><strong>Duración total estimada:</strong> ${route.estimatedDuration}</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">${data.data?.message || 'No se pudo encontrar ninguna ruta, ni directa ni con transbordos'}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error al buscar la ruta: ${error.message || 'Error desconocido'}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
