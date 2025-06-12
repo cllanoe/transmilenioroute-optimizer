@@ -2,7 +2,7 @@
   "name": "transmilenio-route-optimizer",
   "version": "1.0.0",
   "description": "A project to optimize travel times and route selection in TransMilenio, Bogotá.",
-  "main": "src/app.ts",
+  "main": "dist/app.js",
   "scripts": {
     "start": "node dist/app.js",
     "build": "echo 'Already built'",
