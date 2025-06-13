@@ -38,9 +38,11 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
+
 
 export default app;
